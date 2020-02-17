@@ -15,8 +15,8 @@ import           Data.Aeson.TH
 import           Data.Text                     (pack)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
-import           Network.WebSockets.Connection (Connection, forkPingThread,
-                                                sendBinaryData)
+import           Network.WebSockets.Connection (Connection, sendBinaryData,
+                                                withPingThread)
 import           Servant
 import           Servant.API.WebSocket         (WebSocket (..))
 import qualified System.Metrics                as Metrics
@@ -65,7 +65,6 @@ wsServer env = streamData
   where
     streamData :: MonadIO m => Connection -> m ()
     streamData c = do
-      liftIO $ forkPingThread c 10
-      liftIO . forever $ do
+      liftIO . withPingThread c 10 (pure ()) . forever $ do
         sample <- Metrics.sampleAll $ _metricsStore env
         sendBinaryData c (encode $ sampleToJson sample) >> threadDelay 1000000
