@@ -16,10 +16,11 @@ import           Data.Text                     (pack)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
 import           Network.WebSockets.Connection (Connection, forkPingThread,
-                                                sendTextData)
+                                                sendBinaryData)
 import           Servant
 import           Servant.API.WebSocket         (WebSocket (..))
 import qualified System.Metrics                as Metrics
+import           System.Metrics.Json           (sampleToJson)
 
 data User =
   User
@@ -67,4 +68,4 @@ wsServer env = streamData
       liftIO $ forkPingThread c 10
       liftIO . forever $ do
         sample <- Metrics.sampleAll $ _metricsStore env
-        sendTextData c (pack $ show sample) >> threadDelay 1000000
+        sendBinaryData c (encode $ sampleToJson sample) >> threadDelay 1000000
